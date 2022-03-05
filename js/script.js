@@ -1,43 +1,50 @@
 "use strict";
 
-const filterByType = (type, ...values) => {
-  values.filter((value) => typeof value === type);
+const hideAllResponseBlocks = () => {
+  const responseBlocksArray = Array.from(
+    document.querySelectorAll("div.dialog__response-block")
+  );
+  console.log(responseBlocksArray);
+  responseBlocksArray.forEach((block) => (block.style.display = "none"));
+};
 
-  hideAllResponseBlocks = () => {
-    const responseBlocksArray = Array.from(
-      document.querySelectorAll("div.dialog__response-block")
-    );
-    console.log(responseBlocksArray);
-    responseBlocksArray.forEach((block) => (block.style.display = "none"));
-  };
+const showResponseBlock = (blockSelector, msgText, spanSelector) => {
+  hideAllResponseBlocks();
+  document.querySelector(blockSelector).style.display = "block";
+  if (spanSelector) {
+    document.querySelector(spanSelector).textContent = msgText;
+  }
+};
 
-  showResponseBlock = (blockSelector, msgText, spanSelector) => {
-    hideAllResponseBlocks();
-    document.querySelector(blockSelector).style.display = "block";
-    if (spanSelector) {
-      document.querySelector(spanSelector).textContent = msgText;
+const showError = (msgText) =>
+  showResponseBlock(".dialog__response-block_error", msgText, "#error");
+
+const showResults = (msgText) =>
+  showResponseBlock(".dialog__response-block_ok", msgText, "#ok");
+
+const showNoResults = () =>
+  showResponseBlock(".dialog__response-block_no-results");
+
+const filterByType = (type, values) => {
+  const valArr = [];
+  values.split(", ").forEach((item) => {
+    if (+item) {
+      item = +item;
+    } else if (item === "true" || item === "false") {
+      item = item === "true" ? true : false;
     }
-  };
-
-  showError = (msgText) =>
-    showResponseBlock(".dialog__response-block_error", msgText, "#error");
-
-  showResults = (msgText) =>
-    showResponseBlock(".dialog__response-block_ok", msgText, "#ok");
-
-  showNoResults = () => showResponseBlock(".dialog__response-block_no-results");
-
-  tryFilterByType = (type, values) => {
-    try {
-      const valuesArray = eval(`filterByType('${type}', ${values})`).join(", ");
-      const alertMsg = valuesArray.length
-        ? `Данные с типом ${type}: ${valuesArray}`
-        : `Отсутствуют данные типа ${type}`;
-      showResults(alertMsg);
-    } catch (err) {
-      showError(`Ошибка: ${err}`);
-    }
-  };
+    valArr.push(item);
+  });
+  values = valArr.filter((value) => typeof value === type);
+  try {
+    const valuesArray = values.join(", ");
+    const alertMsg = valuesArray.length
+      ? `Данные с типом ${type}: ${valuesArray}`
+      : `Отсутствуют данные типа ${type}`;
+    showResults(alertMsg);
+  } catch (err) {
+    showError(`Ошибка: ${err}`);
+  }
 };
 
 const filterButton = document.querySelector("#filter-btn");
@@ -52,8 +59,6 @@ filterButton.addEventListener("click", (e) => {
   } else {
     dataInput.setCustomValidity("");
     e.preventDefault();
-    tryFilterByType(typeInput.value.trim(), dataInput.value.trim());
+    filterByType(typeInput.value.trim(), dataInput.value.trim());
   }
 });
-
-// filtering data by type
